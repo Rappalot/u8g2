@@ -213,8 +213,12 @@ uint8_t u8x8_d_ssd1322_common(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *
     
       y = (((u8x8_tile_t *)arg_ptr)->y_pos);
       y *= 8;
-    
-      
+
+
+      u8x8_cad_SendCmd(u8x8, 0x075 );	/* set row address */
+      u8x8_cad_SendArg(u8x8, y);
+      u8x8_cad_SendArg(u8x8, y+7);
+
       do
       {
 	c = ((u8x8_tile_t *)arg_ptr)->cnt;
@@ -226,10 +230,6 @@ uint8_t u8x8_d_ssd1322_common(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *
 	  u8x8_cad_SendArg(u8x8, x );	/* start */
 	  u8x8_cad_SendArg(u8x8, x+1 );	/* end */
 
-	  u8x8_cad_SendCmd(u8x8, 0x075 );	/* set row address */
-	  u8x8_cad_SendArg(u8x8, y);
-	  u8x8_cad_SendArg(u8x8, y+7);
-	  
 	  u8x8_cad_SendCmd(u8x8, 0x05c );	/* write to ram */
 	  
 	  u8x8_cad_SendData(u8x8, 32, u8x8_ssd1322_8to32(u8x8, ptr));

@@ -123,6 +123,16 @@ uint8_t u8x8_write_byte_to_16gr_device(u8x8_t *u8x8, uint8_t b)
 }
 
 
+static uint_least8_t gray_level = 0x09;
+
+static void contrast_to_gray_level(uint_fast8_t c)
+{
+  uint_fast8_t g = (c * 16) / 256 + 1;
+  if (g > 0xf)
+    g = 0xf;
+  gray_level = g;
+}
+
 /*
   input:
     one tile (8 Bytes)
@@ -150,22 +160,24 @@ static uint8_t *u8x8_ssd1322_8to32(U8X8_UNUSED u8x8_t *u8x8, uint8_t *ptr)
     for( i = 0; i < 8; i++ )
     {
       v = 0;
-      if ( a&1 ) v |= 0xf0;
-      if ( b&1 ) v |= 0x0f;
+      if ( a&1 ) v |= gray_level << 4;
+      if ( b&1 ) v |= gray_level;
+      //if ( a&1 ) v |= 0xf0;
+      //if ( b&1 ) v |= 0x0f;
       *dest = v;
       dest+=4;
       a >>= 1;
       b >>= 1;
     }
   }
-  
+
   return u8x8_ssd1322_8to32_dest_buf;
 }
 
 
 uint8_t u8x8_d_ssd1322_common(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr)
 {
-  uint8_t x; 
+  uint8_t x;
   uint8_t y, c;
   uint8_t *ptr;
   switch(msg)
@@ -199,6 +211,7 @@ uint8_t u8x8_d_ssd1322_common(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *
       break;
 #ifdef U8X8_WITH_SET_CONTRAST
     case U8X8_MSG_DISPLAY_SET_CONTRAST:
+      contrast_to_gray_level(arg_int);
       u8x8_cad_StartTransfer(u8x8);
       u8x8_cad_SendCmd(u8x8, 0x0C1 );
       u8x8_cad_SendArg(u8x8, arg_int );	/* ssd1322 has range from 0 to 255 */

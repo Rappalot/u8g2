@@ -382,33 +382,23 @@ void setup_u8g2(void)
   draw_color = 1;         // pixel on
 }
 
-/**
- * Do all initialisations, that are not done by a specific module here.
- */
-static void setup_clock_and_gpios(void)
+static void setup_mcu(void)
 {
-    /* Clock setup */
-    /* Default clock is 8MHz HSI */
-    rcc_clock_setup_in_hse_8mhz_out_72mhz();
+  /* Clock setup */
+  /* Default clock is 8MHz HSI */
+  rcc_clock_setup_in_hse_8mhz_out_72mhz();
 
-    /* GPIO setup */
-    /* Only the on board led is configured here */
-
-    //rcc_periph_clock_enable();
-
+  systick_setup();
+  delay_setup();
 }
 
 int main(void)
 {
-  setup_clock_and_gpios();
-  systick_setup();
-  delay_setup();
+  setup_mcu();
   setup_u8g2();
 
   for (;;) {
     uint16_t fps;
-#if 0
-#endif
     fps = picture_loop_with_fps(draw_clip_test);
     show_result("draw clip test", fps);
     delay(5000);

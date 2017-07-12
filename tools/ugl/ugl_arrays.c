@@ -3,6 +3,7 @@
 #include "ugl.h"
 #include "ugl_bc.h"
 #include <string.h>
+#include <stdio.h>
 
 /* arrays & variables */
 
@@ -32,10 +33,21 @@ void ugl_AddBytecode(uint8_t x)
 void ugl_ExecBytecode(void)
 {
   bc_t bc;
-  bc_exec(&bc, ugl_bytecode_array);
+  bc_exec(&bc, ugl_bytecode_array, 0);
 }
 
 
+void ugl_CheckForAllLabelsDefined(void)
+{
+  int i;
+  for( i = 0; i < ugl_label_cnt; i++ )
+  {
+      if ( ugl_label_bytecode_pos[ugl_label_cnt] == 0x0ffff )
+      {
+	ugl_err("undefined label '%s'", ugl_label_name[i] );
+      }
+  }
+}
 
 void ugl_ResolveSymbols(void)
 {
@@ -44,13 +56,15 @@ void ugl_ResolveSymbols(void)
   uint16_t val;
   uint8_t cmd;
   
-  ugl_plog("Resolve start=%p, end=%p", code, dest);
-  ugl_plog("Resolve bytecode len=%d", ugl_bytecode_len);
+  ugl_CheckForAllLabelsDefined();
+  
+  ugl_glog("Resolve start=%p, end=%p", code, dest);
+  ugl_glog("Resolve bytecode len=%d", ugl_bytecode_len);
 
   while( code < dest )
   {
     cmd = *code;
-    ugl_plog("Resolve pos=%p, cmd=%02x", code, cmd);
+    ugl_glog("Resolve pos=%p, cmd=%02x", code, cmd);
     code++;
     val = cmd;
     val &=0x0f0;	/* put upper four bit as upper 4bit of the 12bit value into val */
@@ -69,17 +83,36 @@ void ugl_ResolveSymbols(void)
       case BC_CMD_BRANCH:
 	val |= *code;
 	code++;
-	ugl_plog("Resolve BRANCH '%s' (idx=%d)", ugl_label_name[val], val);
+	ugl_glog("Resolve BRANCH '%s' (idx=%d)", ugl_label_name[val], val);
 	val = ugl_GetLabelBytecodePos(val);
 	val = (val - (uint16_t)(code - ugl_bytecode_array));
-	ugl_plog("Resolve BRANCH delta=0x%03x", val);
+	ugl_glog("Resolve BRANCH delta=0x%03x", val);
 	*(code-2) &= 0x0f;
 	*(code-2) |= (val >> 4) & 0x0f0;
 	*(code-1) = val & 255;
 	break;
+      case BC_CMD_POP_ARG_STACK:
+	break;
+      case BC_CMD_PUSH_ARG_STACK:
+	break;
+      case BC_CMD_CALL_PROCEDURE:
+	    val = code[0];
+	    val <<= 8;
+	    val |= code[1];
+	  
+	    ugl_glog("Resolve CALL Procedre '%s'  pos=%u", ugl_label_name[val], ugl_GetLabelBytecodePos(val));
+
+	    val = ugl_GetLabelBytecodePos(val);
+
+	    *code = val>>8;
+	    code++;
+	    *code = val&255;
+	    code++;
+	    break;
+      
       default: /* assume 0x0f, extended command */
 	switch( cmd )
-	{
+	{	  
 	  case BC_CMD_LOAD_0:
 	    break;
 	  case BC_CMD_LOAD_1:
@@ -97,7 +130,7 @@ void ugl_ResolveSymbols(void)
 	    val |= code[1];
 	  
 	  
-	    ugl_plog("Resolve JUMP '%s'", ugl_label_name[val]);
+	    ugl_glog("Resolve JUMP '%s'", ugl_label_name[val]);
 
 	    val = ugl_GetLabelBytecodePos(val);
 	  
@@ -107,6 +140,27 @@ void ugl_ResolveSymbols(void)
 	    code++;
 	
 	    break;
+#ifdef NOT_USED
+	  case BC_CMD_CALL_PROCEDURE:	    
+	    val = code[0];
+	    val <<= 8;
+	    val |= code[1];
+	  
+	    ugl_glog("Resolve CALL Procedre '%s'  pos=%u", ugl_label_name[val], ugl_GetLabelBytecodePos(val));
+
+	    val = ugl_GetLabelBytecodePos(val);
+
+	    *code = val>>8;
+	    code++;
+	    *code = val&255;
+	    code++;
+	    
+	    break;
+#endif
+/*
+	  case BC_CMD_POP_ARG_STACK:
+	    break;
+*/
 	  default:
 	    ugl_err("Resolve: Unexpected command");
 	    break;
@@ -117,18 +171,6 @@ void ugl_ResolveSymbols(void)
 }
 
  
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -178,3 +220,24 @@ uint16_t ugl_GetLabelBytecodePos(int idx)
   return ugl_label_bytecode_pos[idx];
 }
 
+void ugl_WriteBytecodeCArray(FILE *fp, const char *name)
+{
+  uint16_t i;
+  fprintf(fp, "unsigned char %s[] =\n  \"", name);
+
+  i = 0;
+  while ( i < ugl_bytecode_len )
+  {
+    fprintf(fp, "\\x%02x", ugl_bytecode_array[i]);
+    if ( i+1 == ugl_bytecode_len )
+    {
+      break;
+    }
+    if ( (i & 0x0f) == 0x0f )
+    {
+      fprintf(fp, "\"\n  \"");
+    }
+    i++;
+  }
+  fprintf(fp, "\";\n\n"); 
+}

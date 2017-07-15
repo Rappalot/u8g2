@@ -215,11 +215,11 @@
   U8G2_SSD1325_NHD_128X64_1_4W_HW_SPI		Uno			Clip=19.1 Box=28.3  @=4.1 Pix=7.2		issue 302 after optimization
 
 ==============
-  12 Jul 2017, Ported to C API for STM32F103 @ 72 MHz with libopencm3
-  u8g2_Setup_ssd1322_nhd_256x64_1  4W-HW-SPI  Clip=42.2  Box=47.4  @=10.9  Pix=12.7		issue 302 before optimization
-  u8g2_Setup_ssd1322_nhd_256x64_1  4W-HW-SPI  Clip=48.6  Box=55.7  @=11.3  Pix=13.1		issue 302 after optimization
-  u8g2_Setup_ssd1322_nhd_256x64_2  4W-HW-SPI  Cpip=45.7  Box=48.3  @=14.3  Pix=17.8		issue 302 before optimization
-  u8g2_Setup_ssd1322_nhd_256x64_2  4W-HW-SPI  Cpip=53.4  Box=57.0  @=14.9  Pix=18.7		issue 302 after optimization    
+  15 Jul 2017, Ported to C API for STM32F103 @ 72 MHz with libopencm3 (16 bit)
+  u8g2_Setup_ssd1322_nhd_256x64_1  4W-HW-SPI  Clip=42.4  Box=48.0  @=10.4  Pix=11.7		issue 302 before optimization
+  u8g2_Setup_ssd1322_nhd_256x64_1  4W-HW-SPI  Clip=49.0  Box=56.5  @=10.8  Pix=12.1		issue 302 after optimization
+  u8g2_Setup_ssd1322_nhd_256x64_2  4W-HW-SPI  Cpip=46.0  Box=48.9  @=13.8  Pix=16.7		issue 302 before optimization
+  u8g2_Setup_ssd1322_nhd_256x64_2  4W-HW-SPI  Cpip=53.8  Box=57.8  @=14.4  Pix=17.5		issue 302 after optimization    
 
 */
 
@@ -372,8 +372,8 @@ void show_result(const char *s, uint16_t fps) {
 void setup_u8g2(void)
 {
   // The complete list is available here: https://github.com/olikraus/u8g2/wiki/u8g2setupc
-  //u8g2_Setup_ssd1322_nhd_256x64_2(&u8g2, U8G2_R0, u8x8_byte_stm32f1_4wire_hw_spi, u8x8_gpio_and_delay_stm32f1);  // init u8g2 structure
   u8g2_Setup_ssd1322_nhd_256x64_1(&u8g2, U8G2_R0, u8x8_byte_stm32f1_4wire_hw_spi, u8x8_gpio_and_delay_stm32f1);  // init u8g2 structure
+  //u8g2_Setup_ssd1322_nhd_256x64_2(&u8g2, U8G2_R0, u8x8_byte_stm32f1_4wire_hw_spi, u8x8_gpio_and_delay_stm32f1);  // init u8g2 structure
 
   u8g2_InitDisplay(&u8g2);      // send init sequence to the display, display is in sleep mode after this,
   u8g2_SetPowerSave(&u8g2, 0);  // wake up display

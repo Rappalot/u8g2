@@ -10,6 +10,7 @@
 
 #include "u8g2.h"
 #include "map.h"
+#include "item.h"
 #include <stdio.h>
 #include <unistd.h>
 
@@ -230,16 +231,15 @@ const uint8_t scrollosprites[6642] U8G2_FONT_SECTION("scrollosprites") =
 
 /*===============================================*/
 
+u8g2_t u8g2;
 
 
 /*===============================================*/
 
-u8g2_t u8g2;
 
 void map_draw(uint8_t map_idx, uint8_t x0, uint8_t y0)
 {
   uint8_t x, y;
-  uint16_t offset;
   for( y = 0; y < MAP_DISPLAY_HEIGHT; y++ )
   {
     for( x = 0; x < MAP_DISPLAY_WIDTH; x++ )
@@ -248,15 +248,14 @@ void map_draw(uint8_t map_idx, uint8_t x0, uint8_t y0)
       {
 	if ( (uint8_t)(y+y0) < (uint8_t)map_list[map_idx].height )
 	{
-	  offset = (y+y0) & 255;
-	  offset *= map_list[map_idx].width;
-	  offset += (x+x0)  & 255;
-	  u8g2_DrawGlyph(&u8g2, x*16, 16+y*16, map_list[map_idx].data[offset]);
+	  u8g2_DrawGlyph(&u8g2, x*16, 16+y*16, getMapTile(x+x0, y+y0));
 	}
       }
     }
   }
 }
+
+
 
 
 
@@ -273,7 +272,8 @@ int main(void)
   u8x8_SetPowerSave(u8g2_GetU8x8(&u8g2), 0);  
   
   u8g2_SetFont(&u8g2, scrollosprites);
-  
+
+  setupLevel(0);
 
   
   for(;;)

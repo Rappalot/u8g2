@@ -1,3 +1,4 @@
 *.elf
 *.map
+*.bin
 generated.*.ld

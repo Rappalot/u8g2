@@ -2,7 +2,7 @@
 
   fps-pie.c
 
-  Frames Per Second: Display Performance Test 
+  Frames Per Second: Display Performance Test
 
   Ported from FPS.ino, C++/Arduino to C API
   Leo C. <erbl259-lmu@yahoo.de>
@@ -39,19 +39,27 @@
 
 
 ==============
+  STM32F103 @ 72 MHz with libopencm3, u8g2_Setup_ssd1322_nhd_256x64_1  4W-HW-SPI, 16 bit
 
-==============
-  15 Jul 2017, Ported to C API for STM32F103 @ 72 MHz with libopencm3 (16 bit)
-  u8g2_Setup_ssd1322_nhd_256x64_1  4W-HW-SPI  Clip=42.4  Box=48.0  @=10.4  Pix=11.7		issue 302 before optimization
-  u8g2_Setup_ssd1322_nhd_256x64_1  4W-HW-SPI  Clip=49.0  Box=56.5  @=10.8  Pix=12.1		issue 302 after optimization
-  u8g2_Setup_ssd1322_nhd_256x64_2  4W-HW-SPI  Cpip=46.0  Box=48.9  @=13.8  Pix=16.7		issue 302 before optimization
-  u8g2_Setup_ssd1322_nhd_256x64_2  4W-HW-SPI  Cpip=53.8  Box=57.8  @=14.4  Pix=17.5		issue 302 after optimization    
+    text     --- fps ----
+    size     disc    sect
+    ----------------------------------------------
+    9712     40.8    14.2    "orig"
+    9692     40.4    16.5    "pixel y=0"
+    9668     40.6    18.2    "pixel y=ys"
+    9724     40.6    21.7    "vline"
+    9668     40.6    18.2    clean up, pixel y=ys
+    9724     40.6    21.7    clean up, vline
+    9720     40.8    12.7    10-50,10-330 orig
+    9676     40.6    15.6    10-50,10-330 pixel
+    9732     40.6    21.1    10-50,10-330 vline
 
 */
 
 
 #include "u8g2.h"
 #include "u8x8cb.h"
+#include "draw_disc_sector.h"
 #include <libopencm3/stm32/rcc.h>
 #include <string.h>
 #include "timer.h"
@@ -158,23 +166,42 @@ void draw_pixel(void) {
 }
 #endif
 
-void draw_pie(void) {
-  u8g_uint_t x, y, w, h;
+void draw_disc(void) {
+  u8g_uint_t x0_left, x0_right, y0;
+  u8g_uint_t r, w, h;
+
   u8g2_SetDrawColor(&u8g2, draw_color);
   w = u8g2_GetDisplayWidth(&u8g2);
   h = u8g2_GetDisplayHeight(&u8g2);
-#if 0
-  for( y = 0; y < h2; y++ ) {
-    for( x = 0; x < w2; x++ ) {
-      if ( (x + y) & 1 ) {
-        u8g2_DrawPixel(&u8g2, x,y);
-        u8g2_DrawPixel(&u8g2, x,y+h2);
-        u8g2_DrawPixel(&u8g2, x+w2,y);
-        u8g2_DrawPixel(&u8g2, x+w2,y+h2);
-      }
-    }
-  }
-#endif
+  r = h/2;
+  if (w/4 < r)
+    r = w/4;
+  r -= 2;
+  x0_left = w/4;
+  x0_right = w - w/4;
+  y0 = h/2;
+
+  u8g2_DrawDisc(&u8g2, x0_left, y0, r, U8G2_DRAW_ALL);
+  u8g2_DrawDisc(&u8g2, x0_right, y0, r, U8G2_DRAW_ALL);
+}
+
+void draw_pie(void) {
+  u8g_uint_t x0_left, x0_right, y0;
+  u8g_uint_t r, w, h;
+
+  u8g2_SetDrawColor(&u8g2, draw_color);
+  w = u8g2_GetDisplayWidth(&u8g2);
+  h = u8g2_GetDisplayHeight(&u8g2);
+  r = h/2;
+  if (w/4 < r)
+    r = w/4;
+  r -= 2;
+  x0_left = w/4;
+  x0_right = w - w/4;
+  y0 = h/2;
+
+  u8g2_DrawDisc_sector(&u8g2, x0_left, y0, r, 10, 50);
+  u8g2_DrawDisc_sector(&u8g2, x0_right, y0, r, 10, 330);
 }
 
 // returns unadjusted FPS
@@ -246,20 +273,9 @@ int main(void)
 
   for (;;) {
     uint16_t fps;
-#if 0
-    fps = picture_loop_with_fps(draw_clip_test);
-    show_result("draw clip test", fps);
+    fps = picture_loop_with_fps(draw_disc);
+    show_result("draw disc", fps);
     delay(5000);
-    fps = picture_loop_with_fps(draw_set_screen);
-    show_result("clear screen", fps);
-    delay(5000);
-    fps = picture_loop_with_fps(draw_char);
-    show_result("draw @", fps);
-    delay(5000);
-    fps = picture_loop_with_fps(draw_pixel);
-    show_result("draw pixel", fps);
-    delay(5000);
-#endif
     fps = picture_loop_with_fps(draw_pie);
     show_result("draw pie", fps);
     delay(5000);

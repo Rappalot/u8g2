@@ -148,7 +148,7 @@ static void drawVLine_sections(u8g2_t *u8g2, u8g2_int_t xs, u8g2_int_t ys,
                               u8g2_int_t x_end, u8g2_int_t y_end, uint_fast8_t reverse)
 {
     u8g2_int_t y;
-#if 1
+#if 0
     for (y = ys; y <= ys+h; y++)
         if (reverse ^ is_inside_sector(xs, y, x_start, y_start, x_end, y_end))
             u8g2_DrawPixel(u8g2, x0+xs, y0+y);
@@ -214,6 +214,8 @@ static void u8g2_draw_disc_sector(u8g2_t *u8g2, u8g2_uint_t x0, u8g2_uint_t y0,
   y = rad;
 
   reverse = 0;
+  if (sect_start > sect_end)
+      sect_start -= 360;
   if (sect_end - sect_start > 180) {
       u8g2_int_t v;
       v = sect_start;
@@ -222,17 +224,10 @@ static void u8g2_draw_disc_sector(u8g2_t *u8g2, u8g2_uint_t x0, u8g2_uint_t y0,
       reverse = 1;
   }
 
-#if 0
-  x_start = (cos_256(sect_start) * rad + 127) / 256;
-  y_start = (sin_256(sect_start) * rad + 127) / 256;
-  x_end = (cos_256(sect_end) * rad + 127) / 256;
-  y_end = (sin_256(sect_end) * rad + 127) / 256;
-#endif
   x_start = cos_512(sect_start);
   y_start = sin_512(sect_start);
   x_end   = cos_512(sect_end);
   y_end   = sin_512(sect_end);
-
 
   u8g2_draw_disc_sector_section(u8g2, x, y, x0, y0, x_start, y_start, x_end, y_end, reverse);
 
